@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Presupuestos — 15/04/2026</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --bg2: #131720;
+    --bg3: #1a2030;
+    --bg4: #202840;
+    --border: #2a3448;
+    --text: #e8eaf0;
+    --text2: #8a9ab5;
+    --text3: #5a6a85;
+    --green: #3ecf8e;
+    --blue: #4f8ef7;
+    --yellow: #f5c542;
+    --red: #f25f5c;
+    --orange: #f2994a;
+    --purple: #9b6dff;
+    --teal: #2dd4bf;
+    --pink: #f472b6;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-sans: 'IBM Plex Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; }
+  
+  /* HEADER */
+  .header { padding: 18px 28px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg2); }
+  .header h1 { font-size: 16px; font-weight: 600; letter-spacing: .04em; color: var(--text); }
+  .header .subtitle { font-size: 12px; color: var(--text2); font-family: var(--font-mono); margin-top: 3px; }
+  .header .badge { background: var(--bg4); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; font-family: var(--font-mono); font-size: 11px; color: var(--blue); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 2px; padding: 12px 28px 0; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .tab { padding: 9px 16px; cursor: pointer; border-radius: 6px 6px 0 0; font-size: 12px; font-weight: 500; color: var(--text2); border: 1px solid transparent; border-bottom: none; transition: all .15s; white-space: nowrap; }
+  .tab:hover { color: var(--text); background: var(--bg3); }
+  .tab.active { background: var(--bg); color: var(--text); border-color: var(--border); }
+
+  /* CONTENT */
+  .content { display: none; padding: 24px 28px; }
+  .content.active { display: block; }
+
+  /* KPI CARDS */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; position: relative; overflow: hidden; }
+  .kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .kpi.c-blue::before { background: var(--blue); }
+  .kpi.c-green::before { background: var(--green); }
+  .kpi.c-red::before { background: var(--red); }
+  .kpi.c-yellow::before { background: var(--yellow); }
+  .kpi.c-purple::before { background: var(--purple); }
+  .kpi.c-teal::before { background: var(--teal); }
+  .kpi.c-orange::before { background: var(--orange); }
+  .kpi.c-pink::before { background: var(--pink); }
+  .kpi-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+  .kpi-value { font-family: var(--font-mono); font-size: 22px; font-weight: 600; color: var(--text); }
+  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 4px; font-family: var(--font-mono); }
+
+  /* CHARTS */
+  .chart-row { display: grid; gap: 18px; margin-bottom: 24px; }
+  .chart-row.col2 { grid-template-columns: 1fr 1fr; }
+  .chart-row.col3 { grid-template-columns: 1fr 1fr 1fr; }
+  .chart-row.col-70-30 { grid-template-columns: 2fr 1fr; }
+  .chart-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .chart-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); margin-bottom: 16px; }
+  .chart-wrap { position: relative; }
+
+  /* SECTION TITLE */
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text); border-left: 3px solid var(--blue); padding-left: 10px; margin: 24px 0 14px; }
+
+  /* TABLES */
+  .table-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+  .table-box table { width: 100%; border-collapse: collapse; }
+  .table-box th { background: var(--bg3); color: var(--text2); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-weight: 500; }
+  .table-box td { padding: 9px 14px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  .table-box tr:last-child td { border-bottom: none; }
+  .table-box tr:hover td { background: rgba(255,255,255,.03); }
+  .mono { font-family: var(--font-mono); font-size: 12px; }
+  .right { text-align: right; }
+  .monto { font-family: var(--font-mono); text-align: right; font-size: 12px; }
+
+  /* BADGES */
+  .badge-urg { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; font-family: var(--font-mono); border: 1px solid; }
+  .badge-critico { background: rgba(242,95,92,.15); border-color: var(--red); color: var(--red); }
+  .badge-atencion { background: rgba(245,197,66,.15); border-color: var(--yellow); color: var(--yellow); }
+  .badge-revisar { background: rgba(242,153,74,.15); border-color: var(--orange); color: var(--orange); }
+  .badge-revisar-green { background: rgba(62,207,142,.15); border-color: var(--green); color: var(--green); }
+
+  /* FILTER */
+  .filter-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); cursor: pointer; font-size: 12px; transition: all .15s; }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--blue); color: var(--blue); background: rgba(79,142,247,.1); }
+
+  /* ANALISTA CARD */
+  .analista-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .analista-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  .analista-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+  .analista-stat { display: flex; justify-content: space-between; margin-bottom: 7px; }
+  .analista-stat .label { font-size: 12px; color: var(--text2); }
+  .analista-stat .val { font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
+  .progress-bar { height: 4px; background: var(--bg4); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 2px; }
+
+  /* ALERT BOX */
+  .alert-box { background: rgba(242,95,92,.08); border: 1px solid rgba(242,95,92,.35); border-radius: 10px; padding: 16px 18px; margin-bottom: 20px; }
+  .alert-box .alert-title { color: var(--red); font-weight: 600; font-size: 13px; margin-bottom: 8px; }
+  .alert-box p { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+  /* NOTE */
+  .note { font-size: 11px; color: var(--text3); font-style: italic; margin-top: 10px; padding: 8px 12px; background: var(--bg3); border-radius: 6px; border-left: 2px solid var(--border); }
+
+  /* SPECIAL SECTIONS */
+  .special-section { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 18px; }
+  .special-section h4 { font-size: 13px; font-weight: 600; margin-bottom: 14px; }
+  .special-section h4 span { font-size: 18px; margin-right: 6px; }
+
+  .emoji-money { font-size: 13px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .chart-row.col2, .chart-row.col-70-30 { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="h1">CORPEN S.A. — Dashboard Presupuestos</div>
+    <div class="subtitle">ISO_1504.xlsx · aprobados_1504.xlsx · Actualizado 15/04/2026</div>
+  </div>
+  <div class="badge">📊 Período: Oct 2025 — Abr 2026</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('general')">📊 General</div>
+  <div class="tab" onclick="showTab('plazos')">⏱ Plazos</div>
+  <div class="tab" onclick="showTab('analistas')">👤 Analistas</div>
+  <div class="tab" onclick="showTab('estancados')">🚨 Estancados</div>
+  <div class="tab" onclick="showTab('obras')">🏗 Obras en Ejecución</div>
+  <div class="tab" onclick="showTab('facturar')">💰 Por Facturar</div>
+  <div class="tab" onclick="showTab('clientes')">🏆 Clientes</div>
+  <div class="tab" onclick="showTab('localidades')">📍 Localidades</div>
+</div>
+
+<!-- ==================== GENERAL ==================== -->
+<div id="tab-general" class="content active">
+  <div class="kpi-grid">
+    <div class="kpi c-blue">
+      <div class="kpi-label">Total Presupuestos</div>
+      <div class="kpi-value">1.418</div>
+      <div class="kpi-sub">Oct 2025 — Abr 2026</div>
+    </div>
+    <div class="kpi c-green">
+      <div class="kpi-label">Tasa de Aprobación</div>
+      <div class="kpi-value">42,6%</div>
+      <div class="kpi-sub">604 aprobados</div>
+    </div>
+    <div class="kpi c-red">
+      <div class="kpi-label">Tasa de Rechazo</div>
+      <div class="kpi-value">41,4%</div>
+      <div class="kpi-sub">587 rechazados</div>
+    </div>
+    <div class="kpi c-yellow">
+      <div class="kpi-label">Presupuestos Activos</div>
+      <div class="kpi-value">150</div>
+      <div class="kpi-sub">En estados activos</div>
+    </div>
+    <div class="kpi c-blue">
+      <div class="kpi-label">Monto Total Cotizado</div>
+      <div class="kpi-value" style="font-size:16px">$18.668 M</div>
+      <div class="kpi-sub">Excluyendo $1/$0/nulos</div>
+    </div>
+    <div class="kpi c-green">
+      <div class="kpi-label">Monto Total Aprobado</div>
+      <div class="kpi-value" style="font-size:16px">$2.140 M</div>
+      <div class="kpi-sub">Solo estado APROBADO</div>
+    </div>
+    <div class="kpi c-purple">
+      <div class="kpi-label">Ticket Promedio</div>
+      <div class="kpi-value" style="font-size:16px">$15,5 M</div>
+      <div class="kpi-sub">Exc. $1/$0/nulos</div>
+    </div>
+    <div class="kpi c-orange">
+      <div class="kpi-label">Obras Retrasadas</div>
+      <div class="kpi-value">27</div>
+      <div class="kpi-sub">+20 días sin Conforme</div>
+    </div>
+    <div class="kpi c-teal">
+      <div class="kpi-label">Monto Pend. Facturar</div>
+      <div class="kpi-value" style="font-size:16px">$26,2 M</div>
+      <div class="kpi-sub">36 presupuestos</div>
+    </div>
+    <div class="kpi c-pink">
+      <div class="kpi-label">Sin Facturar (cant.)</div>
+      <div class="kpi-value">36</div>
+      <div class="kpi-sub">Aprobados pendientes</div>
+    </div>
+  </div>
+
+  <div class="chart-row col-70-30">
+    <div class="chart-box">
+      <div class="chart-title">Evolución Mensual — Cantidad y Montos</div>
+      <div class="chart-wrap" style="height:320px"><canvas id="chartEvo"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Distribución por Estado</div>
+      <div class="chart-wrap" style="height:320px"><canvas id="chartEstados"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PLAZOS ==================== -->
+<div id="tab-plazos" class="content">
+  <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi c-blue">
+      <div class="kpi-label">Promedio Global</div>
+      <div class="kpi-value">13,2 días</div>
+      <div class="kpi-sub">Creación → Envío</div>
+    </div>
+    <div class="kpi c-green">
+      <div class="kpi-label">Más Rápido</div>
+      <div class="kpi-value">8,3 días</div>
+      <div class="kpi-sub">Torales Sofia</div>
+    </div>
+    <div class="kpi c-yellow">
+      <div class="kpi-label">Más Lento</div>
+      <div class="kpi-value">17,4 días</div>
+      <div class="kpi-sub">Santillan Melisa</div>
+    </div>
+    <div class="kpi c-purple">
+      <div class="kpi-label">Analistas con datos</div>
+      <div class="kpi-value">5</div>
+      <div class="kpi-sub">≥5 registros válidos</div>
+    </div>
+  </div>
+
+  <div class="chart-row col2">
+    <div class="chart-box">
+      <div class="chart-title">Días Promedio Creación → Envío por Analista</div>
+      <div class="chart-wrap" style="height:300px"><canvas id="chartPlazos"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Rango Mín–Máx por Analista (días)</div>
+      <div class="chart-wrap" style="height:300px"><canvas id="chartRango"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title">Tabla Detalle de Plazos</div>
+  <div class="table-box">
+    <table>
+      <thead>
+        <tr>
+          <th>Analista</th>
+          <th class="right">Registros con plazo</th>
+          <th class="right">Promedio (días)</th>
+          <th class="right">Mínimo</th>
+          <th class="right">Máximo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Torales Sofia</td><td class="mono right">205</td><td class="mono right" style="color:var(--green)">8,3</td><td class="mono right">0</td><td class="mono right">99</td></tr>
+        <tr><td>Porcario Ivan</td><td class="mono right">206</td><td class="mono right" style="color:var(--green)">9,6</td><td class="mono right">0</td><td class="mono right">107</td></tr>
+        <tr><td>Bouvet Uriel</td><td class="mono right">266</td><td class="mono right" style="color:var(--yellow)">14,7</td><td class="mono right">0</td><td class="mono right">104</td></tr>
+        <tr><td>Domanico Tomás</td><td class="mono right">37</td><td class="mono right" style="color:var(--yellow)">16,0</td><td class="mono right">0</td><td class="mono right">140</td></tr>
+        <tr><td>Santillan Melisa</td><td class="mono right">168</td><td class="mono right" style="color:var(--orange)">17,4</td><td class="mono right">0</td><td class="mono right">72</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">* "Registros con plazo" = presupuestos con Fecha Inicio y Fecha Envío Cliente completas y resultado ≥ 0 días. No equivale al total de presupuestos del analista. Mendez Emilce y Rodriguez Damian excluidos por datos insuficientes (&lt;5 registros válidos).</div>
+</div>
+
+<!-- ==================== ANALISTAS ==================== -->
+<div id="tab-analistas" class="content">
+  <div class="section-title">Analistas Activos — Construcción</div>
+  <div class="analista-grid">
+    <div class="analista-card">
+      <h3>Bouvet Uriel</h3>
+      <div class="analista-stat"><span class="label">Total presupuestos</span><span class="val">322</span></div>
+      <div class="analista-stat"><span class="label">Aprobados</span><span class="val" style="color:var(--green)">191 (59,3%)</span></div>
+      <div class="analista-stat"><span class="label">Rechazados</span><span class="val" style="color:var(--red)">120 (37,3%)</span></div>
+      <div class="analista-stat"><span class="label">Monto cotizado</span><span class="val">$1.378 M</span></div>
+      <div class="analista-stat"><span class="label">Plazo promedio</span><span class="val">14,7 días</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:59.3%;background:var(--green)"></div></div>
+    </div>
+    <div class="analista-card">
+      <h3>Torales Sofia</h3>
+      <div class="analista-stat"><span class="label">Total presupuestos</span><span class="val">276</span></div>
+      <div class="analista-stat"><span class="label">Aprobados</span><span class="val" style="color:var(--green)">62 (22,5%)</span></div>
+      <div class="analista-stat"><span class="label">Rechazados</span><span class="val" style="color:var(--red)">170 (61,6%)</span></div>
+      <div class="analista-stat"><span class="label">Monto cotizado</span><span class="val">$5.083 M</span></div>
+      <div class="analista-stat"><span class="label">Plazo promedio</span><span class="val">8,3 días</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:22.5%;background:var(--yellow)"></div></div>
+    </div>
+    <div class="analista-card">
+      <h3>Porcario Ivan</h3>
+      <div class="analista-stat"><span class="label">Total presupuestos</span><span class="val">241</span></div>
+      <div class="analista-stat"><span class="label">Aprobados</span><span class="val" style="color:var(--green)">37 (15,4%)</span></div>
+      <div class="analista-stat"><span class="label">Rechazados</span><span class="val" style="color:var(--red)">152 (63,1%)</span></div>
+      <div class="analista-stat"><span class="label">Monto cotizado</span><span class="val">$9.189 M</span></div>
+      <div class="analista-stat"><span class="label">Plazo promedio</span><span class="val">9,6 días</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:15.4%;background:var(--red)"></div></div>
+    </div>
+    <div class="analista-card">
+      <h3>Santillan Melisa</h3>
+      <div class="analista-stat"><span class="label">Total presupuestos</span><span class="val">256</span></div>
+      <div class="analista-stat"><span class="label">Aprobados</span><span class="val" style="color:var(--green)">147 (57,4%)</span></div>
+      <div class="analista-stat"><span class="label">Rechazados</span><span class="val" style="color:var(--red)">51 (19,9%)</span></div>
+      <div class="analista-stat"><span class="label">Monto cotizado</span><span class="val">$473 M</span></div>
+      <div class="analista-stat"><span class="label">Plazo promedio</span><span class="val">17,4 días</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:57.4%;background:var(--green)"></div></div>
+    </div>
+    <div class="analista-card">
+      <h3>Domanico Tomás</h3>
+      <div class="analista-stat"><span class="label">Total presupuestos</span><span class="val">43</span></div>
+      <div class="analista-stat"><span class="label">Aprobados</span><span class="val" style="color:var(--green)">14 (32,6%)</span></div>
+      <div class="analista-stat"><span class="label">Rechazados</span><span class="val" style="color:var(--red)">28 (65,1%)</span></div>
+      <div class="analista-stat"><span class="label">Monto cotizado</span><span class="val">$1.376 M</span></div>
+      <div class="analista-stat"><span class="label">Plazo promedio</span><span class="val">16,0 días</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:32.6%;background:var(--yellow)"></div></div>
+    </div>
+    <div class="analista-card">
+      <h3>Mendez Emilce <span style="font-size:11px;color:var(--text3);font-weight:400">· nuevo</span></h3>
+      <div class="analista-stat"><span class="label">Total presupuestos</span><span class="val">26</span></div>
+      <div class="analista-stat"><span class="label">Aprobados</span><span class="val" style="color:var(--green)">1 (3,8%)</span></div>
+      <div class="analista-stat"><span class="label">Rechazados</span><span class="val" style="color:var(--red)">7 (26,9%)</span></div>
+      <div class="analista-stat"><span class="label">Monto cotizado</span><span class="val">$237 M</span></div>
+      <div class="analista-stat"><span class="label">Plazo promedio</span><span class="val" style="color:var(--text3)">— (datos insuf.)</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:3.8%;background:var(--red)"></div></div>
+    </div>
+    <div class="analista-card">
+      <h3>Rodriguez Damian <span style="font-size:11px;color:var(--text3);font-weight:400">· nuevo</span></h3>
+      <div class="analista-stat"><span class="label">Total presupuestos</span><span class="val">2</span></div>
+      <div class="analista-stat"><span class="label">Aprobados</span><span class="val" style="color:var(--green)">2 (100%)</span></div>
+      <div class="analista-stat"><span class="label">Rechazados</span><span class="val" style="color:var(--red)">0 (0%)</span></div>
+      <div class="analista-stat"><span class="label">Monto cotizado</span><span class="val">$29 M</span></div>
+      <div class="analista-stat"><span class="label">Plazo promedio</span><span class="val" style="color:var(--text3)">— (datos insuf.)</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--green)"></div></div>
+    </div>
+  </div>
+
+  <div class="chart-row col2">
+    <div class="chart-box">
+      <div class="chart-title">Presupuestos por Analista</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartAnalistaCant"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Tasa de Aprobación por Analista (%)</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartAnalistaTasa"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title">Secciones Especiales</div>
+  <div class="chart-row col2">
+    <div class="special-section">
+      <h4><span>🛒</span> Compras — Diaz Luciano</h4>
+      <div class="analista-stat"><span class="label">Total presupuestos</span><span class="val">18</span></div>
+      <div class="analista-stat"><span class="label">Aprobados</span><span class="val" style="color:var(--green)">1 (5,6%)</span></div>
+      <div class="analista-stat"><span class="label">Rechazados</span><span class="val" style="color:var(--red)">17 (94,4%)</span></div>
+      <div class="analista-stat"><span class="label">Monto total</span><span class="val">$184,5 M</span></div>
+      <p style="font-size:11px;color:var(--text3);margin-top:10px">Presupuestos de compra-venta de materiales. No se mezclan con métricas de construcción.</p>
+    </div>
+    <div class="special-section">
+      <h4><span>📋</span> Abonos — Mortera Sosa Melisa</h4>
+      <div class="analista-stat"><span class="label">Total presupuestos</span><span class="val">170</span></div>
+      <div class="analista-stat"><span class="label">Aprobados</span><span class="val" style="color:var(--green)">139 (81,8%)</span></div>
+      <div class="analista-stat"><span class="label">Rechazados</span><span class="val" style="color:var(--red)">2 (1,2%)</span></div>
+      <div class="analista-stat"><span class="label">Monto total</span><span class="val">$399 M</span></div>
+      <p style="font-size:11px;color:var(--text3);margin-top:10px">Presupuestos de abonos recurrentes. No se mezclan con métricas de construcción.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ESTANCADOS ==================== -->
+<div id="tab-estancados" class="content">
+  <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi c-blue">
+      <div class="kpi-label">Total Estancados</div>
+      <div class="kpi-value">61</div>
+      <div class="kpi-sub">Sin Fecha Envío Cliente</div>
+    </div>
+    <div class="kpi c-red">
+      <div class="kpi-label">🔴 Crítico</div>
+      <div class="kpi-value">3</div>
+      <div class="kpi-sub">Más de 90 días</div>
+    </div>
+    <div class="kpi c-yellow">
+      <div class="kpi-label">🟡 Atención</div>
+      <div class="kpi-value">19</div>
+      <div class="kpi-sub">31 — 90 días</div>
+    </div>
+    <div class="kpi c-green">
+      <div class="kpi-label">🟢 Revisar</div>
+      <div class="kpi-value">39</div>
+      <div class="kpi-sub">Hasta 30 días</div>
+    </div>
+  </div>
+
+  <div class="filter-row" id="filtroEstancados">
+    <button class="filter-btn active" onclick="filtrarEstancados('todos', this)">Todos (61)</button>
+    <button class="filter-btn" onclick="filtrarEstancados('critico', this)">🔴 Crítico (3)</button>
+    <button class="filter-btn" onclick="filtrarEstancados('atencion', this)">🟡 Atención (19)</button>
+    <button class="filter-btn" onclick="filtrarEstancados('revisar', this)">🟢 Revisar (39)</button>
+  </div>
+
+  <div class="table-box">
+    <table id="tablaEstancados">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Cliente</th>
+          <th>Analista</th>
+          <th>Estado</th>
+          <th class="right">Días</th>
+          <th>Urgencia</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyEstancados"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== OBRAS EN EJECUCIÓN ==================== -->
+<div id="tab-obras" class="content">
+  <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi c-blue">
+      <div class="kpi-label">Total Retrasadas</div>
+      <div class="kpi-value">27</div>
+      <div class="kpi-sub">+20 días sin Conforme</div>
+    </div>
+    <div class="kpi c-red">
+      <div class="kpi-label">🔴 Crítico</div>
+      <div class="kpi-value">4</div>
+      <div class="kpi-sub">Más de 90 días</div>
+    </div>
+    <div class="kpi c-yellow">
+      <div class="kpi-label">🟡 Atención</div>
+      <div class="kpi-value">10</div>
+      <div class="kpi-sub">31 — 90 días</div>
+    </div>
+    <div class="kpi c-orange">
+      <div class="kpi-label">🟠 Revisar</div>
+      <div class="kpi-value">13</div>
+      <div class="kpi-sub">20 — 30 días</div>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <button class="filter-btn active" onclick="filtrarObras('todos', this)">Todos (27)</button>
+    <button class="filter-btn" onclick="filtrarObras('critico', this)">🔴 Crítico (4)</button>
+    <button class="filter-btn" onclick="filtrarObras('atencion', this)">🟡 Atención (10)</button>
+    <button class="filter-btn" onclick="filtrarObras('revisar', this)">🟠 Revisar (13)</button>
+  </div>
+
+  <div class="table-box">
+    <table id="tablaObras">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Cliente</th>
+          <th>Analista</th>
+          <th>Estado</th>
+          <th class="right">Días desde Conf.</th>
+          <th>Urgencia</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyObras"></tbody>
+    </table>
+  </div>
+  <div class="note">💡 La Fecha Confirmación es la fecha en que el cliente autorizó formalmente el inicio del trabajo. Es la referencia correcta para medir tiempo en ejecución. No hay presupuestos en cruce con pendientes de facturar en este período. 💰 = aparece además en pendientes de facturar.</div>
+</div>
+
+<!-- ==================== POR FACTURAR ==================== -->
+<div id="tab-facturar" class="content">
+  <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi c-teal">
+      <div class="kpi-label">Monto Total Pendiente</div>
+      <div class="kpi-value" style="font-size:18px">$26,2 M</div>
+      <div class="kpi-sub">Exc. $1/$0/nulos</div>
+    </div>
+    <div class="kpi c-blue">
+      <div class="kpi-label">Cantidad Pendientes</div>
+      <div class="kpi-value">36</div>
+      <div class="kpi-sub">Presupuestos aprobados</div>
+    </div>
+    <div class="kpi c-purple">
+      <div class="kpi-label">Ticket Promedio</div>
+      <div class="kpi-value" style="font-size:18px">$729 K</div>
+      <div class="kpi-sub">Exc. $1/$0/nulos</div>
+    </div>
+    <div class="kpi c-green">
+      <div class="kpi-label">Cruce con Obras</div>
+      <div class="kpi-value">0</div>
+      <div class="kpi-sub">Sin alertas máx. prioridad</div>
+    </div>
+  </div>
+
+  <div class="chart-row col2">
+    <div class="chart-box">
+      <div class="chart-title">Pendiente por Analista ($)</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartFactAnalista"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Pendiente por Cliente ($)</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartFactCliente"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title">Detalle Completo — Aprobados sin Facturar</div>
+  <div class="table-box">
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Cliente</th>
+          <th>Analista</th>
+          <th class="right">Monto $</th>
+          <th class="right">Días sin facturar</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">34842</td><td>NEWSAN SA</td><td>Torales Sofia</td><td class="monto">$951.997</td><td class="mono right">1</td></tr>
+        <tr><td class="mono">34773</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$56.369</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">34772</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$59.458</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">34766</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$59.458</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">34765</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$113.163</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">34762</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$103.482</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">34730</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$874.334</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">34729</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$554.555</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">34713</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$177.072</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">34709</td><td>CENCOSUD S.A.</td><td>Torales Sofia</td><td class="monto">$874.950</td><td class="mono right">0</td></tr>
+        <tr><td class="mono">34685</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$100.132</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">34682</td><td>MIG SOCIEDAD ANONIMA</td><td>Mendez Emilce</td><td class="monto">$718.955</td><td class="mono right">28</td></tr>
+        <tr><td class="mono">34679</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$103.482</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">34660</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$233.654</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">34635</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$259.172</td><td class="mono right">36</td></tr>
+        <tr><td class="mono">34629</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$1.114.392</td><td class="mono right">40</td></tr>
+        <tr><td class="mono">34568</td><td>MIG SOCIEDAD ANONIMA</td><td>Torales Sofia</td><td class="monto">$230.000</td><td class="mono right">44</td></tr>
+        <tr><td class="mono">34560</td><td>CENCOSUD S.A.</td><td>Porcario Ivan</td><td class="monto">$2.100.510</td><td class="mono right">21</td></tr>
+        <tr><td class="mono">34556</td><td>CENCOSUD S.A.</td><td>Porcario Ivan</td><td class="monto">$1.893.475</td><td class="mono right">27</td></tr>
+        <tr><td class="mono">34576</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$866.189</td><td class="mono right">42</td></tr>
+        <tr><td class="mono">34524</td><td>MIG SOCIEDAD ANONIMA</td><td>Torales Sofia</td><td class="monto">$955.501</td><td class="mono right">51</td></tr>
+        <tr><td class="mono">34519</td><td>DIA ARGENTINA S.A.</td><td>Bouvet Uriel</td><td class="monto">$113.332</td><td class="mono right">47</td></tr>
+        <tr><td class="mono">34515</td><td>METROGAS S.A.</td><td>Torales Sofia</td><td class="monto">$339.709</td><td class="mono right">51</td></tr>
+        <tr><td class="mono">34514</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$2.684.246</td><td class="mono right">48</td></tr>
+        <tr><td class="mono">34396</td><td>DIA ARGENTINA S.A.</td><td>Bouvet Uriel</td><td class="monto">$57.208</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">34376</td><td>METROGAS S.A.</td><td>Torales Sofia</td><td class="monto">$1.191.926</td><td class="mono right">77</td></tr>
+        <tr><td class="mono">34070</td><td>LOGISTICS PLATFORMS</td><td>Torales Sofia</td><td class="monto">$4.956.217</td><td class="mono right" style="color:var(--red)">121</td></tr>
+        <tr><td class="mono">34000</td><td>CENCOSUD S.A.</td><td>Santillan Melisa</td><td class="monto">$2.448.416</td><td class="mono right" style="color:var(--red)">127</td></tr>
+        <tr><td class="mono">33893</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$57.208</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">33880</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$57.208</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">33867</td><td>DIA ARGENTINA S.A.</td><td>Bouvet Uriel</td><td class="monto">$139.398</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">33662</td><td>CENCOSUD S.A.</td><td>Torales Sofia</td><td class="monto">$738.074</td><td class="mono right" style="color:var(--red)">65</td></tr>
+        <tr><td class="mono">33842</td><td>DIA ARGENTINA S.A.</td><td>Santillan Melisa</td><td class="monto">$57.208</td><td class="mono right" style="color:var(--text3)">—</td></tr>
+        <tr><td class="mono">33627</td><td>DIA ARGENTINA S.A.</td><td>Bouvet Uriel</td><td class="monto">$171.624</td><td class="mono right" style="color:var(--red)">117</td></tr>
+        <tr><td class="mono">33498</td><td>CENCOSUD S.A.</td><td>Torales Sofia</td><td class="monto">$707.835</td><td class="mono right" style="color:var(--red)">152</td></tr>
+        <tr><td class="mono">33404</td><td>DIA ARGENTINA S.A.</td><td>Florentin Peralta*</td><td class="monto">$125.230</td><td class="mono right" style="color:var(--red)">190</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">* Florentin Peralta: ex-analista, incluido en totales históricos. — = sin Fecha Confirmación registrada. Días calculados desde Fecha Confirmación al 15/04/2026.</div>
+
+  <div class="section-title">⚠️ Alerta Cruce — Obras Retrasadas + Pendientes de Facturar</div>
+  <div class="alert-box">
+    <div class="alert-title">Sin presupuestos en cruce en este período</div>
+    <p>No se detectaron presupuestos que aparezcan simultáneamente en obras retrasadas (+20 días sin Conforme) y en la lista de pendientes de facturar. Este es el estado esperado: implica que los presupuestos aprobados sin facturar aún no superaron el umbral de retraso en ejecución, o bien ya tienen Fecha Conforme registrada.</p>
+  </div>
+</div>
+
+<!-- ==================== CLIENTES ==================== -->
+<div id="tab-clientes" class="content">
+  <div class="chart-row col-70-30">
+    <div class="chart-box">
+      <div class="chart-title">Top 10 Clientes — Monto Aprobado ($)</div>
+      <div class="chart-wrap" style="height:320px"><canvas id="chartClientesMonto"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Tasa de Aprobación — Top Clientes (%)</div>
+      <div class="chart-wrap" style="height:320px"><canvas id="chartClientesTasa"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title">Tabla Resumen — Top Clientes</div>
+  <div class="table-box">
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th class="right">Total Pres.</th>
+          <th class="right">Aprobados</th>
+          <th class="right">Rechazados</th>
+          <th class="right">Tasa Aprob.</th>
+          <th class="right">Monto Aprobado</th>
+          <th class="right">Pend. Facturar $</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>MIG SOCIEDAD ANONIMA</td><td class="mono right">51</td><td class="mono right">19</td><td class="mono right">25</td><td class="mono right">37,3%</td><td class="monto">$272.423.800</td><td class="monto" style="color:var(--yellow)">$1.904.456</td></tr>
+        <tr><td>CONVENIO MARCO MJ Y DH...</td><td class="mono right">6</td><td class="mono right">3</td><td class="mono right">3</td><td class="mono right">50,0%</td><td class="monto">$236.369.900</td><td class="monto">$0</td></tr>
+        <tr><td>DIA ARGENTINA S.A.</td><td class="mono right">498</td><td class="mono right">287</td><td class="mono right">147</td><td class="mono right">57,6%</td><td class="monto">$209.710.900</td><td class="monto" style="color:var(--yellow)">$8.137.574</td></tr>
+        <tr><td>CENCOSUD S.A.</td><td class="mono right">236</td><td class="mono right">37</td><td class="mono right">138</td><td class="mono right">15,7%</td><td class="monto">$208.198.800</td><td class="monto" style="color:var(--yellow)">$8.763.260</td></tr>
+        <tr><td>MOLINOS RIO DE LA PLATA</td><td class="mono right">117</td><td class="mono right">78</td><td class="mono right">24</td><td class="mono right">66,7%</td><td class="monto">$204.701.200</td><td class="monto">$0</td></tr>
+        <tr><td>DIARCO S.A.</td><td class="mono right">59</td><td class="mono right">50</td><td class="mono right">1</td><td class="mono right">84,7%</td><td class="monto">$167.296.700</td><td class="monto">$0</td></tr>
+        <tr><td>LABORATORIOS ANDROMACO</td><td class="mono right">61</td><td class="mono right">47</td><td class="mono right">13</td><td class="mono right">77,0%</td><td class="monto">$145.354.800</td><td class="monto">$0</td></tr>
+        <tr><td>LOGISTICS PLATFORMS</td><td class="mono right">20</td><td class="mono right">7</td><td class="mono right">10</td><td class="mono right">35,0%</td><td class="monto">$111.392.100</td><td class="monto" style="color:var(--red)">$4.956.217</td></tr>
+        <tr><td>NEWSAN SA</td><td class="mono right">23</td><td class="mono right">6</td><td class="mono right">6</td><td class="mono right">26,1%</td><td class="monto">$98.400.710</td><td class="monto" style="color:var(--yellow)">$951.997</td></tr>
+        <tr><td>VIENTOS DE CAMPANA</td><td class="mono right">1</td><td class="mono right">1</td><td class="mono right">0</td><td class="mono right">100%</td><td class="monto">$92.000.000</td><td class="monto">$0</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== LOCALIDADES ==================== -->
+<div id="tab-localidades" class="content">
+  <div class="chart-row col-70-30">
+    <div class="chart-box">
+      <div class="chart-title">Top 20 Localidades (presupuestos)</div>
+      <div class="chart-wrap" style="height:420px"><canvas id="chartLocTop"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Top 8 — Distribución</div>
+      <div class="chart-wrap" style="height:420px"><canvas id="chartLocDonut"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+Chart.register(ChartDataLabels);
+
+// ---- COLORES ----
+const C = {
+  blue: '#4f8ef7', green: '#3ecf8e', yellow: '#f5c542',
+  red: '#f25f5c', orange: '#f2994a', purple: '#9b6dff',
+  teal: '#2dd4bf', pink: '#f472b6', text2: '#8a9ab5', border: '#2a3448'
+};
+
+const baseOptions = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: {
+    legend: { labels: { color: C.text2, font: { family: 'IBM Plex Sans', size: 11 } } },
+    datalabels: { color: '#e8eaf0', font: { family: 'IBM Plex Mono', size: 10, weight: '600' } }
+  },
+  scales: {
+    x: { ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: 'rgba(42,52,72,.5)' } },
+    y: { ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: 'rgba(42,52,72,.5)' } }
+  }
+};
+
+function noAxesOptions(extra) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: baseOptions.plugins.legend, datalabels: baseOptions.plugins.datalabels, ...extra }
+  };
+}
+
+// ==================== EVOLUCIÓN MENSUAL ====================
+new Chart(document.getElementById('chartEvo'), {
+  type: 'bar',
+  data: {
+    labels: ['Oct-25','Nov-25','Dic-25','Ene-26','Feb-26','Mar-26','Abr-26*'],
+    datasets: [
+      {
+        type: 'bar', label: 'Cantidad total',
+        data: [281,272,240,185,161,151,127],
+        backgroundColor: 'rgba(79,142,247,.25)', borderColor: C.blue, borderWidth: 1,
+        yAxisID: 'y', datalabels: { anchor: 'end', align: 'top', color: C.blue }
+      },
+      {
+        type: 'line', label: '$ Cotizado (M)',
+        data: [3120, 2438, 2063, 2562, 1741, 6226, 504],
+        borderColor: C.purple, pointBackgroundColor: C.purple, tension: .3,
+        yAxisID: 'y2', datalabels: { display: false }
+      },
+      {
+        type: 'line', label: '$ Aprobado (M)',
+        data: [420, 461, 646, 219, 149, 188, 44],
+        borderColor: C.green, pointBackgroundColor: C.green, tension: .3,
+        yAxisID: 'y2', datalabels: { display: false }
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: baseOptions.plugins.legend,
+      datalabels: { color: C.blue, font: { family: 'IBM Plex Mono', size: 10, weight: '600' } },
+      tooltip: { mode: 'index', intersect: false }
+    },
+    scales: {
+      x: { ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: 'rgba(42,52,72,.5)' } },
+      y: { ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: 'rgba(42,52,72,.5)' }, position: 'left', title: { display: true, text: 'Cantidad', color: C.text2, font: { size: 10 } } },
+      y2: { ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => '$'+v+'M' }, grid: { display: false }, position: 'right', title: { display: true, text: 'Monto $M', color: C.text2, font: { size: 10 } } }
+    }
+  }
+});
+
+// ==================== DONUT ESTADOS ====================
+new Chart(document.getElementById('chartEstados'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Aprobado','Rechazado','Seguimiento','Proc. Cotización','Abonos','En Curso','Emergencias','Otros'],
+    datasets: [{
+      data: [604, 587, 65, 47, 26, 21, 17, 51],
+      backgroundColor: [C.green, C.red, C.blue, C.yellow, C.purple, C.teal, C.orange, C.text2],
+      borderColor: '#0d0f14', borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { color: C.text2, font: { family: 'IBM Plex Sans', size: 11 }, boxWidth: 12, padding: 8 } },
+      datalabels: {
+        color: '#e8eaf0', font: { family: 'IBM Plex Mono', size: 10, weight: '600' },
+        formatter: (v, ctx) => {
+          const pct = (v / 1418 * 100).toFixed(1);
+          return pct > 3 ? pct + '%' : '';
+        }
+      }
+    }
+  }
+});
+
+// ==================== PLAZOS ====================
+new Chart(document.getElementById('chartPlazos'), {
+  type: 'bar',
+  data: {
+    labels: ['Torales Sofia','Porcario Ivan','Bouvet Uriel','Domanico Tomás','Santillan Melisa'],
+    datasets: [{
+      label: 'Días promedio',
+      data: [8.3, 9.6, 14.7, 16.0, 17.4],
+      backgroundColor: [C.green, C.green, C.yellow, C.yellow, C.orange],
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      datalabels: { anchor: 'end', align: 'right', color: '#e8eaf0', font: { family: 'IBM Plex Mono', size: 11, weight: '600' }, formatter: v => v.toFixed(1) + 'd' }
+    },
+    scales: {
+      x: { ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: 'rgba(42,52,72,.5)' } },
+      y: { ticks: { color: C.text2, font: { family: 'IBM Plex Sans', size: 11 } }, grid: { display: false } }
+    }
+  }
+});
+
+new Chart(document.getElementById('chartRango'), {
+  type: 'bar',
+  data: {
+    labels: ['Torales Sofia','Porcario Ivan','Bouvet Uriel','Domanico Tomás','Santillan Melisa'],
+    datasets: [
+      { label: 'Mínimo', data: [0,0,0,0,0], backgroundColor: 'rgba(62,207,142,.3)', borderRadius: 4 },
+      { label: 'Máximo', data: [99,107,104,140,72], backgroundColor: 'rgba(242,95,92,.5)', borderRadius: 4 }
+    ]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: baseOptions.plugins.legend,
+      datalabels: {
+        anchor: 'end', align: 'right', color: '#e8eaf0',
+        font: { family: 'IBM Plex Mono', size: 10, weight: '600' },
+        formatter: v => v + 'd'
+      }
+    },
+    scales: {
+      x: { ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: 'rgba(42,52,72,.5)' } },
+      y: { ticks: { color: C.text2, font: { family: 'IBM Plex Sans', size: 11 } }, grid: { display: false } }
+    }
+  }
+});
+
+// ==================== ANALISTAS ====================
+new Chart(document.getElementById('chartAnalistaCant'), {
+  type: 'bar',
+  data: {
+    labels: ['Bouvet','Torales','Porcario','Santillan','Domanico','Mendez','Rodriguez'],
+    datasets: [
+      { label: 'Aprobados', data: [191,62,37,147,14,1,2], backgroundColor: C.green, borderRadius: 3 },
+      { label: 'Rechazados', data: [120,170,152,51,28,7,0], backgroundColor: C.red, borderRadius: 3 },
+      { label: 'Otros', data: [11,44,52,58,1,18,0], backgroundColor: 'rgba(138,154,181,.3)', borderRadius: 3 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: baseOptions.plugins.legend,
+      datalabels: { display: false }
+    },
+    scales: {
+      x: { stacked: true, ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: 'rgba(42,52,72,.5)' } },
+      y: { stacked: true, ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: 'rgba(42,52,72,.5)' } }
+    }
+  }
+});
+
+new Chart(document.getElementById('chartAnalistaTasa'), {
+  type: 'bar',
+  data: {
+    labels: ['Bouvet','Torales','Porcario','Santillan','Domanico','Mendez','Rodriguez'],
+    datasets: [{
+      label: 'Tasa aprobación %',
+      data: [59.3, 22.5, 15.4, 57.4, 32.6, 3.8, 100],
+      backgroundColor: [C.green, C.yellow, C.red, C.green, C.yellow, C.red, C.green],
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      datalabels: { anchor: 'end', align: 'top', color: '#e8eaf0', font: { family: 'IBM Plex Mono', size: 10, weight: '600' }, formatter: v => v + '%' }
+    },
+    scales: {
+      x: { ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: 'rgba(42,52,72,.5)' } },
+      y: { max: 110, ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(42,52,72,.5)' } }
+    }
+  }
+});
+
+// ==================== FACTURAR ====================
+new Chart(document.getElementById('chartFactAnalista'), {
+  type: 'bar',
+  data: {
+    labels: ['Santillan Melisa','Torales Sofia','Porcario Ivan','Mendez Emilce','Bouvet Uriel','Florentin*'],
+    datasets: [{
+      data: [9979198, 10946208, 3993985, 718955, 481562, 125230],
+      backgroundColor: [C.blue, C.teal, C.purple, C.yellow, C.green, C.text2],
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      datalabels: { anchor: 'end', align: 'right', color: '#e8eaf0', font: { family: 'IBM Plex Mono', size: 10, weight: '600' }, formatter: v => '$' + (v/1000000).toFixed(2) + 'M' }
+    },
+    scales: {
+      x: { ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => '$'+(v/1000000).toFixed(1)+'M' }, grid: { color: 'rgba(42,52,72,.5)' } },
+      y: { ticks: { color: C.text2, font: { family: 'IBM Plex Sans', size: 11 } }, grid: { display: false } }
+    }
+  }
+});
+
+new Chart(document.getElementById('chartFactCliente'), {
+  type: 'bar',
+  data: {
+    labels: ['CENCOSUD','DIA ARGENTINA','LOGISTICS PL.','MIG S.A.','METROGAS','NEWSAN'],
+    datasets: [{
+      data: [8763260, 8137574, 4956217, 1904456, 1531635, 951997],
+      backgroundColor: [C.blue, C.orange, C.purple, C.teal, C.green, C.yellow],
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      datalabels: { anchor: 'end', align: 'right', color: '#e8eaf0', font: { family: 'IBM Plex Mono', size: 10, weight: '600' }, formatter: v => '$' + (v/1000000).toFixed(2) + 'M' }
+    },
+    scales: {
+      x: { ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => '$'+(v/1000000).toFixed(1)+'M' }, grid: { color: 'rgba(42,52,72,.5)' } },
+      y: { ticks: { color: C.text2, font: { family: 'IBM Plex Sans', size: 11 } }, grid: { display: false } }
+    }
+  }
+});
+
+// ==================== CLIENTES ====================
+new Chart(document.getElementById('chartClientesMonto'), {
+  type: 'bar',
+  data: {
+    labels: ['MIG S.A.','Conv. MJ','DIA ARG.','CENCOSUD','MOLINOS','DIARCO','ANDROMACO','LOGISTICS','NEWSAN','VIENTOS'],
+    datasets: [{
+      data: [272.4, 236.4, 209.7, 208.2, 204.7, 167.3, 145.4, 111.4, 98.4, 92.0],
+      backgroundColor: [C.blue, C.purple, C.orange, C.teal, C.green, C.yellow, C.pink, C.red, C.blue, C.green],
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      datalabels: { anchor: 'end', align: 'top', color: '#e8eaf0', font: { family: 'IBM Plex Mono', size: 9, weight: '600' }, formatter: v => '$'+v+'M' }
+    },
+    scales: {
+      x: { ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: 'rgba(42,52,72,.5)' } },
+      y: { ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => '$'+v+'M' }, grid: { color: 'rgba(42,52,72,.5)' } }
+    }
+  }
+});
+
+new Chart(document.getElementById('chartClientesTasa'), {
+  type: 'bar',
+  data: {
+    labels: ['MIG','Conv.MJ','DIA','CENCOSUD','MOLINOS','DIARCO','ANDROMACO','LOGISTICS','NEWSAN','VIENTOS'],
+    datasets: [{
+      data: [37.3, 50.0, 57.6, 15.7, 66.7, 84.7, 77.0, 35.0, 26.1, 100],
+      backgroundColor: v => {
+        const vals = [37.3,50,57.6,15.7,66.7,84.7,77,35,26.1,100];
+        return vals[v.dataIndex] >= 60 ? C.green : vals[v.dataIndex] >= 40 ? C.yellow : C.red;
+      },
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      datalabels: { anchor: 'end', align: 'right', color: '#e8eaf0', font: { family: 'IBM Plex Mono', size: 10, weight: '600' }, formatter: v => v.toFixed(1) + '%' }
+    },
+    scales: {
+      x: { max: 110, ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 }, callback: v => v+'%' }, grid: { color: 'rgba(42,52,72,.5)' } },
+      y: { ticks: { color: C.text2, font: { family: 'IBM Plex Sans', size: 11 } }, grid: { display: false } }
+    }
+  }
+});
+
+// ==================== LOCALIDADES ====================
+new Chart(document.getElementById('chartLocTop'), {
+  type: 'bar',
+  data: {
+    labels: ['CABA','Victoria','Pilar','Liniers','Luganó','Avellaneda','Flores','La Plata','Parque Patricio','Ezeiza','Martínez','Tortuguitas','Laferrere','Escobar','Parque Avellaneda','9 de Abril','Villa Luro','Parque Chacabuco','Lanús','Otros'],
+    datasets: [{
+      data: [341,40,38,31,31,26,22,21,20,18,18,18,17,16,15,13,13,12,12,30],
+      backgroundColor: 'rgba(79,142,247,.6)', borderColor: C.blue, borderWidth: 1, borderRadius: 3
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      datalabels: { anchor: 'end', align: 'right', color: '#e8eaf0', font: { family: 'IBM Plex Mono', size: 9, weight: '600' } }
+    },
+    scales: {
+      x: { ticks: { color: C.text2, font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: 'rgba(42,52,72,.5)' } },
+      y: { ticks: { color: C.text2, font: { family: 'IBM Plex Sans', size: 10 } }, grid: { display: false } }
+    }
+  }
+});
+
+new Chart(document.getElementById('chartLocDonut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['CABA','Victoria','Pilar','Liniers','Luganó','Avellaneda','Flores','La Plata'],
+    datasets: [{
+      data: [341,40,38,31,31,26,22,21],
+      backgroundColor: [C.blue, C.teal, C.green, C.yellow, C.orange, C.purple, C.pink, C.red],
+      borderColor: '#0d0f14', borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { color: C.text2, font: { family: 'IBM Plex Sans', size: 11 }, boxWidth: 12, padding: 8 } },
+      datalabels: {
+        color: '#e8eaf0', font: { family: 'IBM Plex Mono', size: 10, weight: '600' },
+        formatter: (v, ctx) => {
+          const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+          const pct = (v/total*100).toFixed(1);
+          return pct > 4 ? pct+'%' : '';
+        }
+      }
+    }
+  }
+});
+
+// ==================== DATOS ESTANCADOS ====================
+const estancadosDetalle = [
+  {cod:33828, cliente:'DIA ARGENTINA S.A.', analista:'Bouvet Uriel', estado:'SEGUIMIENTO', dias:152, urg:'critico'},
+  {cod:34858, cliente:'CORPEN', analista:'Mortera Sosa', estado:'SEGUIMIENTO', dias:132, urg:'critico'},
+  {cod:34144, cliente:'FONDO COOP. TÉCNICA / PSA', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:113, urg:'critico'},
+  {cod:34342, cliente:'DIA ARGENTINA S.A.', analista:'Bouvet Uriel', estado:'NP E.PROCESO DE COMPRA', dias:83, urg:'atencion'},
+  {cod:34340, cliente:'CENCOSUD S.A.', analista:'Torales Sofia', estado:'SEGUIMIENTO', dias:83, urg:'atencion'},
+  {cod:34348, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'PROCESO COTIZACIÓN', dias:82, urg:'atencion'},
+  {cod:34388, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'SEGUIMIENTO', dias:76, urg:'atencion'},
+  {cod:34403, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'PROCESO COTIZACIÓN', dias:72, urg:'atencion'},
+  {cod:34467, cliente:'DIA ARGENTINA S.A.', analista:'Bouvet Uriel', estado:'PROCESO COTIZACIÓN', dias:65, urg:'atencion'},
+  {cod:34495, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'SEGUIMIENTO', dias:62, urg:'atencion'},
+  {cod:34654, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'NP E.PROCESO DE COMPRA', dias:44, urg:'atencion'},
+  {cod:34580, cliente:'DIA ARGENTINA S.A.', analista:'Bouvet Uriel', estado:'EN CURSO', dias:44, urg:'atencion'},
+  {cod:34570, cliente:'DIA ARGENTINA S.A.', analista:'Bouvet Uriel', estado:'PROCESO COTIZACIÓN', dias:44, urg:'atencion'},
+  {cod:34623, cliente:'MOLINOS RIO DE LA PLATA', analista:'Mortera Sosa', estado:'EN CURSO', dias:43, urg:'atencion'},
+  {cod:34617, cliente:'MOLINOS RIO DE LA PLATA', analista:'Mortera Sosa', estado:'EN CURSO', dias:43, urg:'atencion'},
+  {cod:34581, cliente:'MIG SOCIEDAD ANONIMA', analista:'Porcario Ivan', estado:'PROCESO COTIZACIÓN', dias:43, urg:'atencion'},
+  {cod:34630, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'PROCESO COTIZACIÓN', dias:41, urg:'atencion'},
+  {cod:34637, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'PROCESO COTIZACIÓN', dias:40, urg:'atencion'},
+  {cod:34649, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'EN CURSO', dias:36, urg:'atencion'},
+  {cod:34648, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'EN CURSO', dias:36, urg:'atencion'},
+  {cod:34644, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'EN CURSO', dias:36, urg:'atencion'},
+  {cod:34643, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'EN CURSO', dias:36, urg:'atencion'},
+  {cod:34676, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'EN CURSO', dias:30, urg:'revisar'},
+  {cod:34681, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'PROCESO COTIZACIÓN', dias:29, urg:'revisar'},
+  {cod:34722, cliente:'NEWSAN SA', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:20, urg:'revisar'},
+  {cod:34721, cliente:'ANDREANI LOGISTICA SA.', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:20, urg:'revisar'},
+  {cod:34720, cliente:'CENCOSUD S.A.', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:20, urg:'revisar'},
+  {cod:34719, cliente:'NEWSAN SA', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:20, urg:'revisar'},
+  {cod:34787, cliente:'MIG SOCIEDAD ANONIMA', analista:'Mendez Emilce', estado:'PROCESO COTIZACIÓN', dias:9, urg:'revisar'},
+  {cod:34776, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'EN CURSO', dias:9, urg:'revisar'},
+  {cod:34771, cliente:'ANDREANI LOGISTICA SA.', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:9, urg:'revisar'},
+  {cod:34802, cliente:'B BRAUN MEDICAL S.A.', analista:'Santillan Melisa', estado:'SEGUIMIENTO', dias:8, urg:'revisar'},
+  {cod:34798, cliente:'CENCOSUD S.A.', analista:'Mendez Emilce', estado:'PROCESO COTIZACIÓN', dias:8, urg:'revisar'},
+  {cod:34795, cliente:'MIG SOCIEDAD ANONIMA', analista:'Mendez Emilce', estado:'PROCESO COTIZACIÓN', dias:8, urg:'revisar'},
+  {cod:34819, cliente:'BENITO ROGGIO / TECSAN', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:7, urg:'revisar'},
+  {cod:34818, cliente:'ANDREANI LOGISTICA SA.', analista:'Almirón Rueda', estado:'PROCESO COTIZACIÓN', dias:7, urg:'revisar'},
+  {cod:34817, cliente:'ANDREANI LOGISTICA SA.', analista:'Porcario Ivan', estado:'PROCESO COTIZACIÓN', dias:7, urg:'revisar'},
+  {cod:34816, cliente:'NUEVO CLIENTE', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:7, urg:'revisar'},
+  {cod:34812, cliente:'AZAHARES DEL AYUI S.A.S.', analista:'Almirón Rueda', estado:'PROCESO COTIZACIÓN', dias:7, urg:'revisar'},
+  {cod:34811, cliente:'ANDREANI LOGISTICA SA.', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:7, urg:'revisar'},
+  {cod:34809, cliente:'CENCOSUD S.A.', analista:'Mendez Emilce', estado:'PROCESO COTIZACIÓN', dias:7, urg:'revisar'},
+  {cod:34807, cliente:'CENCOSUD S.A.', analista:'Mendez Emilce', estado:'PROCESO COTIZACIÓN', dias:7, urg:'revisar'},
+  {cod:34805, cliente:'STIHL MOTOIMPLEMENTOS', analista:'Santillan Melisa', estado:'PROCESO COTIZACIÓN', dias:7, urg:'revisar'},
+  {cod:34827, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'PROCESO COTIZACIÓN', dias:6, urg:'revisar'},
+  {cod:34825, cliente:'NUEVO CLIENTE', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:6, urg:'revisar'},
+  {cod:34838, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'PROCESO COTIZACIÓN', dias:2, urg:'revisar'},
+  {cod:34836, cliente:'LOGISTICS PLATFORMS', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:2, urg:'revisar'},
+  {cod:34835, cliente:'KANSAI S.A.', analista:'Bouvet Uriel', estado:'PROCESO COTIZACIÓN', dias:2, urg:'revisar'},
+  {cod:34833, cliente:'CENCOSUD S.A.', analista:'Almirón Rueda', estado:'PROCESO COTIZACIÓN', dias:2, urg:'revisar'},
+  {cod:34855, cliente:'LA NUEVA METROPOL SA', analista:'Porcario Ivan', estado:'PROCESO COTIZACIÓN', dias:1, urg:'revisar'},
+  {cod:34854, cliente:'LA NUEVA METROPOL SA', analista:'Porcario Ivan', estado:'PROCESO COTIZACIÓN', dias:1, urg:'revisar'},
+  {cod:34851, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'PROCESO COTIZACIÓN', dias:1, urg:'revisar'},
+  {cod:34850, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'PROCESO COTIZACIÓN', dias:1, urg:'revisar'},
+  {cod:34847, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'PROCESO COTIZACIÓN', dias:1, urg:'revisar'},
+  {cod:34846, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'PROCESO COTIZACIÓN', dias:1, urg:'revisar'},
+  {cod:34844, cliente:'FONDO COOP. TÉCNICA / PSA', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:1, urg:'revisar'},
+  {cod:34843, cliente:'FONDO COOP. TÉCNICA / PSA', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:1, urg:'revisar'},
+  {cod:34864, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'PROCESO COTIZACIÓN', dias:0, urg:'revisar'},
+  {cod:34863, cliente:'LOGISTICS PLATFORMS', analista:'Torales Sofia', estado:'PROCESO COTIZACIÓN', dias:0, urg:'revisar'},
+  {cod:34862, cliente:'BIOARS S.A.', analista:'Almirón Rueda', estado:'PROCESO COTIZACIÓN', dias:0, urg:'revisar'},
+  {cod:34861, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'PROCESO COTIZACIÓN', dias:0, urg:'revisar'},
+];
+
+function renderEstancados(filtro) {
+  const tbody = document.getElementById('tbodyEstancados');
+  tbody.innerHTML = '';
+  const data = filtro === 'todos' ? estancadosDetalle : estancadosDetalle.filter(r => r.urg === filtro);
+  data.forEach(r => {
+    const badge = r.urg === 'critico' ? '<span class="badge-urg badge-critico">🔴 Crítico</span>' :
+                  r.urg === 'atencion' ? '<span class="badge-urg badge-atencion">🟡 Atención</span>' :
+                  '<span class="badge-urg badge-revisar-green">🟢 Revisar</span>';
+    const diasColor = r.urg === 'critico' ? 'var(--red)' : r.urg === 'atencion' ? 'var(--yellow)' : 'var(--text2)';
+    const diasLabel = r.dias === 0 ? 'Hoy' : r.dias + 'd';
+    tbody.innerHTML += `<tr>
+      <td class="mono">${r.cod}</td>
+      <td>${r.cliente}</td>
+      <td>${r.analista}</td>
+      <td style="font-size:11px;color:var(--text2)">${r.estado}</td>
+      <td class="mono right" style="color:${diasColor};font-weight:600">${diasLabel}</td>
+      <td>${badge}</td>
+    </tr>`;
+  });
+}
+renderEstancados('todos');
+
+function filtrarEstancados(f, btn) {
+  document.querySelectorAll('#filtroEstancados .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEstancados(f);
+}
+
+// ==================== DATOS OBRAS EN EJECUCIÓN ====================
+const obrasData = [
+  {cod:34197, cliente:'DIA ARGENTINA S.A.', analista:'Bouvet Uriel', estado:'TERMINADO CON FALTANTES', dias:91, urg:'critico'},
+  {cod:33789, cliente:'TELECENTRO SA', analista:'Porcario Ivan', estado:'CON OC PEND. VISITA FINAL', dias:118, urg:'critico'},
+  {cod:33703, cliente:'LAB. ANDROMACO', analista:'Torales Sofia', estado:'NP CREADA', dias:114, urg:'critico'},
+  {cod:33643, cliente:'NEWSAN SA', analista:'Torales Sofia', estado:'NP CREADA', dias:91, urg:'critico'},
+  {cod:34580, cliente:'DIA ARGENTINA S.A.', analista:'Bouvet Uriel', estado:'EN CURSO', dias:41, urg:'atencion'},
+  {cod:34574, cliente:'SILVERA DANIEL', analista:'Porcario Ivan', estado:'NP E.PROCESO COMPRA', dias:34, urg:'atencion'},
+  {cod:34548, cliente:'B BRAUN MEDICAL', analista:'Bouvet Uriel', estado:'SERVICIOS EN OBRA', dias:42, urg:'atencion'},
+  {cod:34520, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'EN CURSO', dias:49, urg:'atencion'},
+  {cod:34498, cliente:'ANDREANI LOGISTICA', analista:'Torales Sofia', estado:'DAR INICIO', dias:55, urg:'atencion'},
+  {cod:34488, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'TERMINADO CON FALTANTES', dias:48, urg:'atencion'},
+  {cod:34407, cliente:'TELECENTRO SA', analista:'Porcario Ivan', estado:'EN CURSO', dias:61, urg:'atencion'},
+  {cod:34342, cliente:'DIA ARGENTINA S.A.', analista:'Bouvet Uriel', estado:'NP E.PROCESO COMPRA', dias:78, urg:'atencion'},
+  {cod:34439, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'EN CURSO', dias:36, urg:'atencion'},
+  {cod:34138, cliente:'LOGISTICS PLATFORMS', analista:'Porcario Ivan', estado:'CON OC PEND. VISITA FINAL', dias:65, urg:'atencion'},
+  {cod:34676, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'EN CURSO', dias:23, urg:'revisar'},
+  {cod:34661, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'SEGUIMIENTO', dias:30, urg:'revisar'},
+  {cod:34658, cliente:'MOLINOS RIO DE LA PLATA', analista:'Porcario Ivan', estado:'EN CURSO', dias:30, urg:'revisar'},
+  {cod:34649, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'EN CURSO', dias:28, urg:'revisar'},
+  {cod:34648, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'EN CURSO', dias:26, urg:'revisar'},
+  {cod:34644, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'EN CURSO', dias:27, urg:'revisar'},
+  {cod:34643, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'EN CURSO', dias:23, urg:'revisar'},
+  {cod:34640, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'NP E.PROCESO COMPRA', dias:29, urg:'revisar'},
+  {cod:34628, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'EN CURSO', dias:23, urg:'revisar'},
+  {cod:34617, cliente:'MOLINOS RIO DE LA PLATA', analista:'Mortera Sosa', estado:'EN CURSO', dias:29, urg:'revisar'},
+  {cod:34654, cliente:'DIA ARGENTINA S.A.', analista:'Santillan Melisa', estado:'NP E.PROCESO COMPRA', dias:28, urg:'revisar'},
+  {cod:34558, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'EN CURSO', dias:21, urg:'revisar'},
+  {cod:34546, cliente:'CENCOSUD S.A.', analista:'Porcario Ivan', estado:'EN CURSO', dias:28, urg:'revisar'},
+];
+
+function renderObras(filtro) {
+  const tbody = document.getElementById('tbodyObras');
+  tbody.innerHTML = '';
+  const data = filtro === 'todos' ? obrasData : obrasData.filter(r => r.urg === filtro);
+  data.sort((a,b) => b.dias - a.dias);
+  data.forEach(r => {
+    const badge = r.urg === 'critico' ? '<span class="badge-urg badge-critico">🔴 Crítico</span>' :
+                  r.urg === 'atencion' ? '<span class="badge-urg badge-atencion">🟡 Atención</span>' :
+                  '<span class="badge-urg badge-revisar">🟠 Revisar</span>';
+    const diasColor = r.dias > 90 ? 'var(--red)' : r.dias > 30 ? 'var(--yellow)' : 'var(--orange)';
+    tbody.innerHTML += `<tr>
+      <td class="mono">${r.cod}</td>
+      <td>${r.cliente}</td>
+      <td>${r.analista}</td>
+      <td style="font-size:11px;color:var(--text2)">${r.estado}</td>
+      <td class="mono right" style="color:${diasColor};font-weight:600">${r.dias}d</td>
+      <td>${badge}</td>
+    </tr>`;
+  });
+}
+renderObras('todos');
+
+function filtrarObras(f, btn) {
+  document.querySelectorAll('#tab-obras .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderObras(f);
+}
+
+// ==================== TAB NAV ====================
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+</script>
+</body>
+</html>
